@@ -23,6 +23,7 @@ const mapDispatchToProps = dispatch => ({
 function RenderDish(props){
     const dish = props.dish;
     handleViewRef = ref => this.view = ref;    
+    handleCommentRef = refcom => this.Modal = refcom;
 
     const recognizeDrag = ({moveX, moveY, dx, dy}) => {
         if(dx < -200)
@@ -31,6 +32,13 @@ function RenderDish(props){
             return false;
     }
     
+    const recognizeComment = ({moveX, moveY, dx, dy}) => {
+        if(dx > 200)
+            return true;
+        else    
+            return false;
+    }
+
     const panResponder = PanResponder.create({
         onStartShouldSetPanResponder: (e, gestureState) => {
             return true;
@@ -57,6 +65,11 @@ function RenderDish(props){
                     ],
                     {cancelable: false}
                 );
+                return true;
+            }
+            if(recognizeComment(gestureState))
+            {
+                props.commentOnPress();
                 return true;
             }
         }
@@ -139,7 +152,6 @@ class Dishdetail extends Component{
 
     constructor(props){
         super(props);
-
         this.state = {
             rating: 5,
             author: '',
@@ -195,6 +207,7 @@ class Dishdetail extends Component{
                     onDismiss={() => {this.toggleModal(); this.resetForm()}}
                     onRequestClose={() => {this.toggleModal(); this.resetForm();}}
                     dishId={dishId}
+                    refcom={this.handleCommentRef}
                 >
                     <View styles={styles.modalStyle}>
                         <Rating
