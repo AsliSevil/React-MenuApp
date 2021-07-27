@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Menu from './MenuComponent';
 import Dishdetail from './DishdetailComponent';
-import { View, Platform, Text, Image, StyleSheet, ScrollView } from 'react-native';
+import { View, Platform, Text, Image, StyleSheet, ScrollView, ToastAndroid } from 'react-native';
 import { createDrawerNavigator, createStackNavigator, DrawerItems, SafeAreaView } from 'react-navigation';
 import Constants from 'expo-constants';
 import Home from './HomeComponent';
@@ -13,6 +13,7 @@ import Login from './LoginComponent';
 import { Icon } from 'react-native-elements';
 import { connect } from 'react-redux';
 import { fetchDishes, fetchComments, fetchLeaders, fetchPromos} from '../redux/ActionCreators';
+import NetInfo from '@react-native-community/netinfo';
 
 const mapStateToProps = state => {
     return {
@@ -310,18 +311,59 @@ const MainNavigator = createDrawerNavigator({
 
 class Main extends Component{
 
+    constructor(props){
+        super(props);
+        this.state = {
+            type: null,
+            isConnected: null,
+            selectedDish: null
+        };
+    }
+
     componentDidMount() {
         this.props.fetchDishes();
         this.props.fetchComments();
         this.props.fetchPromos();
         this.props.fetchLeaders();
+
+        //Setting initial network state:
+        NetInfo.fetch().then((connectionInfo) => {
+            ToastAndroid.show('Initial Network Connectivity Type: '
+                + connectionInfo.type, ToastAndroid.LONG);
+            this.setState( { type: connectionInfo.type });
+        })
+        //Subscribing to network updates
+        this.netinfoUnsubscribe = NetInfo.addEventListener(this.handleConnectivityChange)
     }
 
-    constructor(props){
-        super(props);
-        this.state = {
-            selectedDish: null
-        };
+    componentWillUnmount() {
+        if (this.netinfoUnsubscribe) {
+            this.netinfoUnsubscribe();
+            this.netinfoUnsubscribe = null;
+        }
+    }
+
+    handleConnectivityChange= (connectionInfo) => {
+        if (connectionInfo.type !== this.state.type) {
+            this.setState( {type: connectionInfo.type});
+            this.setState({isConnected: connectionInfo.isConnected});
+            switch(this.state.type){
+                case 'none':
+                    ToastAndroid.show('You are now offline!', ToastAndroid.LONG);
+                    break;
+                case 'wifi':
+                    ToastAndroid.show('You are now connected to WIFI!', ToastAndroid.LONG);
+                    break;
+                case 'cellular':
+                    ToastAndroid.show('You are now connected to Cellular!', ToastAndroid.LONG);
+                    break;
+                case 'unknown':
+                    ToastAndroid.show('You now have unknown connection!', ToastAndroid.LONG);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     onDishSelect(dishId){
