@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, Text, ScrollView, Image } from 'react-native';
+import { View, StyleSheet, Text, ScrollView, Image, Dimensions } from 'react-native';
 import { Input, CheckBox, Button, Icon} from 'react-native-elements';
 import * as SecureStore from 'expo-secure-store';
 import * as Permissions from 'expo-permissions';
@@ -7,6 +7,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 import { createBottomTabNavigator } from 'react-navigation';
 import { baseUrl } from '../shared/baseUrl';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { Asset } from 'expo-asset';
+
 
 class LoginTab extends Component {
     
@@ -33,7 +36,15 @@ class LoginTab extends Component {
     }
 
     static navigationOptions = {
-        title: 'Login'
+        title: 'Login',
+        tabBarIcon: ({tintColor, focused }) => (
+            <Icon
+                name='sign-in'
+                type='font-awesome'
+                size={24}
+                iconStyle={{ color: tintColor}}
+            />
+        )
     };
 
     handleLogin() {
@@ -53,6 +64,7 @@ class LoginTab extends Component {
 
     render() {
         return (
+            <ScrollView>
             <View style={styles.container}>
                 <Input
                     placeholder='Username'
@@ -94,9 +106,9 @@ class LoginTab extends Component {
                 </View>
                 <View style={styles.formButton}>
                         <Button
-                            onPress={() => this.props.navigation.navigate('Register')}
                             title="Register"
                             clear
+                            onPress={() => this.props.navigation.navigate('Register')}
                             icon={
                                 <Icon
                                     name='user-plus'
@@ -111,6 +123,7 @@ class LoginTab extends Component {
                         />
                 </View>
             </View>
+            </ScrollView>
         );
     }
 }
@@ -132,7 +145,6 @@ class RegisterTab extends Component {
 
     getImageFromCamera = async () => {
         const cameraPermission = await Permissions.askAsync(Permissions.CAMERA);
-        //const cameraRollPermission = await Permissions.askAsync(Permissions.CAMERA_ROLL);
         if ( cameraPermission.status === 'granted') {
             let capturedImage = await ImagePicker.launchCameraAsync({
                 allowsEditing: true,
@@ -140,9 +152,21 @@ class RegisterTab extends Component {
             });
             if( !capturedImage.cancelled ){
                 console.log(capturedImage);
-                this.setState( { imageUrl: capturedImage.uri });
+                this.processImage( capturedImage.uri )
             }
         }
+    }
+
+    processImage = async ( imageUri ) => {
+        let processedImage = await ImageManipulator.manipulateAsync(
+            imageUri,
+            [
+                { resize: { width: 400 }}
+            ],
+            { format: 'png' }
+        );
+        console.log(processedImage);
+        this.setState({ imageUrl: processedImage.uri });
     }
 
     static navigationOptions = {
@@ -246,8 +270,9 @@ class RegisterTab extends Component {
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
         justifyContent: 'center',
-        margin: 20
+        width: Dimensions.get('window').width
     },
     imageContainer: {
         flex: 1,
