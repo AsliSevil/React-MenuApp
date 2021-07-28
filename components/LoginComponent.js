@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, Text, ScrollView, Image, Dimensions } from 'react-native';
+import { View, StyleSheet, Text, ScrollView, Image, Dimensions, Platform, ToastAndroid } from 'react-native';
 import { Input, CheckBox, Button, Icon} from 'react-native-elements';
 import * as SecureStore from 'expo-secure-store';
 import * as Permissions from 'expo-permissions';
@@ -157,6 +157,24 @@ class RegisterTab extends Component {
         }
     }
 
+    getImageFromGallery = async () => {
+            let result = await ImagePicker.launchImageLibraryAsync({
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 1,
+            });
+
+            console.log(result);
+
+            if (!result.cancelled) {
+                console.log(result);
+                this.processImage( result.uri )
+            }
+        
+        
+    }
+    
+
     processImage = async ( imageUri ) => {
         let processedImage = await ImageManipulator.manipulateAsync(
             imageUri,
@@ -200,6 +218,10 @@ class RegisterTab extends Component {
                     <Button
                         title="Camera"
                         onPress={this.getImageFromCamera}
+                    />
+                    <Button
+                        title="Gallery"
+                        onPress={this.getImageFromGallery}
                     />
                 </View>
                 <Input
